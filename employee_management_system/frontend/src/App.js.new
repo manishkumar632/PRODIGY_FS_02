@@ -1,0 +1,80 @@
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from './context/AuthContext';
+
+// Pages
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import EmployeeList from './pages/EmployeeList';
+import EmployeeForm from './pages/EmployeeForm';
+import NewsManagement from './pages/NewsManagement';
+import NotFound from './pages/NotFound';
+
+// Components
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedAdminRoute from './components/ProtectedAdminRoute';
+
+function App() {
+  const { isAuthenticated, currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
+
+  return (
+    <>
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route 
+          path="/login" 
+          element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} 
+        />
+        <Route 
+          path="/signup" 
+          element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} 
+        />
+        
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Employee Routes - Admin Only */}
+          {isAdmin ? (
+            <Route path="/employees">
+              <Route index element={<EmployeeList />} />
+              <Route path="add" element={<EmployeeForm />} />
+              <Route path="edit/:id" element={<EmployeeForm />} />
+            </Route>
+          ) : (
+            <Route path="/employees/*" element={<Navigate to="/dashboard" />} />
+          )}
+        </Route>
+        
+        {/* Admin Routes */}
+        <Route element={<ProtectedAdminRoute />}>
+          <Route path="/news-management" element={<NewsManagement />} />
+        </Route>
+        
+        {/* 404 Route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+}
+
+export default App; 
